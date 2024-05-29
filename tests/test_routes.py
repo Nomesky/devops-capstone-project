@@ -152,7 +152,6 @@ class TestAccountService(TestCase):
         # Make sure location header is set
         location = response.headers.get("Location", None)
         self.assertIsNotNone(location)
-        
         # update the account
         new_account = response.get_json()
         new_account["email"] = "unknown"
@@ -163,8 +162,7 @@ class TestAccountService(TestCase):
 
     def test_delete_account(self):
         """It should Delete an Account"""
-
-        #create account to be deleted
+        # create account to be deleted
         test_account = self._create_accounts(1)[0]
         resp = self.client.get(
             f"{BASE_URL}/{test_account.id}", content_type="application/json"
@@ -185,7 +183,7 @@ class TestAccountService(TestCase):
         response = self.client.get(BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
-        self.assertEqual(len(data), 5)  
+        self.assertEqual(len(data), 5)
 
     def test_method_not_allowed(self):
         """It should not allow an illegal method call"""
