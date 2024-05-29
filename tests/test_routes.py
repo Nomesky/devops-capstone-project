@@ -139,33 +139,53 @@ class TestAccountService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_account(self):
-        """It should Update an existing Account"""
-        # create an Account to update
-        test_account = AccountFactory()
-        resp = self.client.post(BASE_URL, json=test_account.serialize())
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        """It should Update an existing account"""
+        # create an account to update
+        account = AccountFactory()
+        response = self.client.post(
+            BASE_URL,
+            json=account.serialize(),
+            content_type="application/json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+        
         # update the account
-        new_account = resp.get_json()
-        new_account["name"] = "Something Known"
-        resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        updated_account = resp.get_json()
-        self.assertEqual(updated_account["name"], "Something Known")
+        new_account = response.get_json()
+        new_account["email"] = "unknown"
+        response = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_account = response.get_json()
+        self.assertEqual(updated_account["email"], "unknown")
 
     def test_delete_account(self):
         """It should Delete an Account"""
-        account = self._create_accounts(1)[0]
-        resp = self.client.delete(f"{BASE_URL}/{account.id}")
-        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        #create account to be deleted
+        test_account = self._create_accounts(1)[0]
+        resp = self.client.get(
+            f"{BASE_URL}/{test_account.id}", content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        response = self.client.delete(f"{BASE_URL}/{test_account.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
+
+        # make sure they are deleted
+        response = self.client.get(f"{BASE_URL}/{test_account.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_account_list(self):
-        """It should Get a list of Accounts"""
+        """It should Get a list of Accounts (test_routes.py)"""
         self._create_accounts(5)
-        resp = self.client.get(BASE_URL)
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        data = resp.get_json()
-        self.assertEqual(len(data), 5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)  
 
     def test_method_not_allowed(self):
         """It should not allow an illegal method call"""
