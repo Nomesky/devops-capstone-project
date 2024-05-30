@@ -15,6 +15,7 @@ spec:
     - name: repo-url
     - name: branch
       default: main
+    - name: build-image
   tasks:
     - name: init
       workspaces:
@@ -51,16 +52,21 @@ spec:
       runAfter:
         - clone
         
-    - name: tests
+    - name: deploy
       workspaces:
-        - name: source
+        - name: manifest-dir
           workspace: pipeline-workspace
       taskRef:
-        name: nose
+        name: openshift-client
+        kind: ClusterTask
       params:
-      - name: database_uri
-        value: "sqlite:///test.db"
-      - name: args
-        value: "-v --with-spec --spec-color"
+      - name: SCRIPT
+        value: |
+          echo "Updating manifest..."
+          sed -i "s|IMAGE_NAME_HERE|$(params.build-image)|g" deploy/deployment.yaml
+          cat deploy/deployment.yaml
+          echo "Deploying to OpenShift..."
+          oc apply -f deploy/
+          oc get pods -l app=accounts
       runAfter:
-        - clone
+        - build
